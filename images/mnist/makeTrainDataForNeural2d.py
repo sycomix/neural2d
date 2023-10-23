@@ -47,46 +47,46 @@ from PIL import Image, ImageDraw
 
 
 def makeDataSet(imageFile, labelFile, destDir, prefix, configFile):
-    print("Extracting images and labels from %s and %s" % (imageFile, labelFile)) 
-    print("into directory %s" % (destDir))
-    
+    print(f"Extracting images and labels from {imageFile} and {labelFile}")
+    print(f"into directory {destDir}")
+
     if not os.path.exists(destDir):
         os.makedirs(destDir)
-    
+
     ifile = open(imageFile, "rb")
     lfile = open(labelFile, "rb")
     config = open(configFile, "wt")
-    
+
     # Get the number of items from both headers; the numbers must match.
-    
+
     lfile.seek(4)
     numLabels  = ord(lfile.read(1)) << 24
     numLabels += ord(lfile.read(1)) << 16
     numLabels += ord(lfile.read(1)) << 8
     numLabels += ord(lfile.read(1))
     print("# numLabels=%d" % (numLabels))
-    
+
     ifile.seek(4)
     numImages  = ord(ifile.read(1)) << 24
     numImages += ord(ifile.read(1)) << 16
     numImages += ord(ifile.read(1)) << 8
     numImages += ord(ifile.read(1))
     print("# numImages=%d" % (numImages))
-    
+
     if numImages != numLabels:
         print("Error: the image and label files don't appear to be matching MNIST database files.")
-        print("Download the necessary files from %s" % (MNIST_URL))
+        print(f"Download the necessary files from {MNIST_URL}")
         exit(1)
-    
+
     # Get the image dimensions
-    
+
     ifile.seek(8)
     height  = ord(ifile.read(1)) << 24
     height += ord(ifile.read(1)) << 16
     height += ord(ifile.read(1)) << 8
     height += ord(ifile.read(1))
     print("# height=%d" % (height))
-    
+
     ifile.seek(0xc)
     width  = ord(ifile.read(1)) << 24
     width += ord(ifile.read(1)) << 16
@@ -96,20 +96,19 @@ def makeDataSet(imageFile, labelFile, destDir, prefix, configFile):
 
     if height != 28 or width != 28:
         print("Error: the database files don't appear to be the right files.")
-        print("Download the necessary files from %s" % (MNIST_URL))
+        print(f"Download the necessary files from {MNIST_URL}")
         exit(1)
-    
+
     # Position the file read at the start of data:
-    
+
     ifile.seek(0x10)
     lfile.seek(8)
-    
+
     # Write the input data config file
 
     print("Writing BMP files... this may take a few minutes...")
-    
-    indexNum = 0;  # starting number for naming the extracted image files
 
+    indexNum = 0
     while numImages > 0:
         # Create the image file:
         bytes = ifile.read(height * width)
@@ -117,12 +116,12 @@ def makeDataSet(imageFile, labelFile, destDir, prefix, configFile):
         im = im.convert("RGB")
         imageFilename = "%s/%s%d.bmp" % (destDir, prefix, indexNum)
         im.save(imageFilename)
-    
+
         # Collect the target values:
         label = lfile.read(1)  # 0..9
         targetVals = [falseVal] * 10
         targetVals[ord(label)] = trueVal
-    
+
         # Print the config line:
         config.write("images/mnist/%s %d %d %d %d %d %d %d %d %d %d\n" % (
               imageFilename,
@@ -136,7 +135,7 @@ def makeDataSet(imageFile, labelFile, destDir, prefix, configFile):
               targetVals[7],
               targetVals[8],
               targetVals[9]))
-        numImages = numImages - 1
+        numImages -= 1
         indexNum = indexNum + 1
 
 if __name__ == '__main__':
